@@ -1,2 +1,0 @@
-class ScappingError(Exception):
-    pass

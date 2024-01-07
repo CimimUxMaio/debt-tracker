@@ -1,7 +1,7 @@
 import config
 
 from abc import ABC, abstractmethod
-from typing import NamedTuple
+from typing import NamedTuple, Tuple
 from selenium import webdriver
 from selenium.webdriver.firefox.webdriver import WebDriver
 
@@ -12,19 +12,25 @@ class DebtReport(NamedTuple):
     debt: float
 
 
+ScrapperReport = Tuple[str, DebtReport | None]
+
+
 class Scrapper(ABC):
     def __init__(self, name: str):
         self.name = name
 
-    def run_report(self) -> DebtReport:
+    def run_report(self) -> ScrapperReport:
         options = webdriver.FirefoxOptions()
         options.add_argument("--headless")
 
         with webdriver.Firefox(options=options) as driver:
             driver.implicitly_wait(config.IMPLICIT_WAIT)
-            report = self.scrap(driver)
+            try:
+                report = self.scrap(driver)
+            except Exception:
+                report = None
 
-        return report
+        return self.name, report
 
     @abstractmethod
     def scrap(self, driver: WebDriver) -> DebtReport:
