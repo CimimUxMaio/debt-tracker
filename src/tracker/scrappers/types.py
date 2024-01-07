@@ -12,7 +12,7 @@ class DebtReport(NamedTuple):
     debt: float
 
 
-ScrapperReport = Tuple[str, DebtReport | None]
+ScrapperReport = Tuple[str, list[DebtReport]]
 
 
 class Scrapper(ABC):
@@ -28,10 +28,10 @@ class Scrapper(ABC):
             try:
                 report = self.scrap(driver)
             except Exception:
-                report = None
+                report = []
 
         return self.name, report
 
     @abstractmethod
-    def scrap(self, driver: WebDriver) -> DebtReport:
+    def scrap(self, driver: WebDriver) -> list[DebtReport]:
         pass

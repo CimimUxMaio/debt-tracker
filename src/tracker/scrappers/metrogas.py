@@ -6,5 +6,5 @@ class Metrogas(Scrapper):
     def __init__(self):
         super().__init__("Metrogas")
 
-    def scrap(self, driver: WebDriver) -> DebtReport:
-        return DebtReport("metrogas_id", "Address metrogas", 333.5)
+    def scrap(self, driver: WebDriver) -> list[DebtReport]:
+        return [DebtReport("metrogas_id", "Address metrogas", 333.5)]

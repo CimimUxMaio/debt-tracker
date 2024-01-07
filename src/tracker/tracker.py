@@ -25,7 +25,7 @@ class DebtTracker(mp.Process):
 
     def run(self):
         with mp.Pool(processes=config.SCRAPPER_POOL_SIZE) as pool:
-            schedule.every(10).seconds.do(self.report_debt, pool)
+            schedule.every(60).seconds.do(self.report_debt, pool)
             while True:
                 schedule.run_pending()
 
@@ -39,5 +39,7 @@ class DebtTracker(mp.Process):
 
     def report_debt(self, pool: Pool):
         reports = pool.map(run_scrapper, self.scrappers)
-        for s, r in reports:
-            print(s, r)
+        for s, rs in reports:
+            print(s)
+            for r in rs:
+                print(r)
