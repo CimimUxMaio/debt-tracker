@@ -8,6 +8,7 @@ selenium = "*"
 python-dotenv = "*"
 python-telegram-bot = "*"
 pyeffects = "*"
+schedule = "*"
 
 [dev-packages]
 

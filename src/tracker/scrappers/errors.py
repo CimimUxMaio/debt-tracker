@@ -1,0 +1,2 @@
+class ScappingError(Exception):
+    pass
