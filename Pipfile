@@ -6,9 +6,9 @@ name = "pypi"
 [packages]
 selenium = "*"
 python-dotenv = "*"
-python-telegram-bot = "*"
 pyeffects = "*"
 schedule = "*"
+python-telegram-bot = {extras = ["job-queue"], version = "*"}
 
 [dev-packages]
 

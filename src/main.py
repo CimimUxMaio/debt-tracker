@@ -1,7 +1,7 @@
 import os
+import telegrambot
 
 from dotenv import load_dotenv
-from tracker import DebtTracker
 
 
 load_dotenv()
@@ -12,6 +12,4 @@ if __name__ == "__main__":
     if token is None:
         raise Exception("TELEGRAM_TOKEN is not set")
 
-    tracker = DebtTracker()
-    tracker.start()
-    tracker.join()
+    telegrambot.run(token)
