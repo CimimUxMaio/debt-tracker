@@ -1,5 +1,6 @@
 from .full import Full
-from .scrappers.types import DebtReport
+from .dummy import Dummy
+from .scrappers.types import DebtReport, ScrapperReport
 
 
-__all__ = ["DebtReport", "Full"]
+__all__ = ["DebtReport", "ScrapperReport", "Full", "Dummy"]

@@ -1,5 +1,11 @@
+import telegrambot.presenter as presenter
+import asyncio
+
+from trackers import Dummy, ScrapperReport
 from typing import cast
 from telegram import Message, Update, User
+from telegram.helpers import escape_markdown
+from telegram.constants import ParseMode
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -11,6 +17,10 @@ from telegram.ext import (
 
 
 __all__ = ["run"]
+
+
+def build_tracker():
+    return Dummy()
 
 
 def run(token: str):
@@ -25,7 +35,28 @@ def setup_application(app: Application):
             CommandHandler("start", start),
             CommandHandler("suscribir", subscribe),
             CommandHandler("desuscribir", unsubscribe),
+            CommandHandler("informe", report),
         ]
+    )
+
+
+async def generate_report() -> list[ScrapperReport]:
+    tracker = build_tracker()
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(None, tracker.run)
+
+
+async def send_notification(chat_id: int, context: ContextTypes.DEFAULT_TYPE):
+    reports = await generate_report()
+    markdown = presenter.markdown(reports)
+    footer = escape_markdown(
+        "Si no queres continuar recibiendo estas notificaciones, utiliza /desuscribir.",
+        version=2,
+    )
+    await context.bot.send_message(
+        chat_id,
+        markdown + f"\n\n\n_{footer}_",
+        parse_mode=ParseMode.MARKDOWN_V2,
     )
 
 
@@ -50,9 +81,6 @@ async def subscribe(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = cast(Message, update.message)
     job_queue = cast(JobQueue, context.job_queue)
 
-    async def send_notification(ctx: ContextTypes.DEFAULT_TYPE):
-        await ctx.bot.send_message(msg.chat_id, "Notificacion")
-
     if context.user_data is None:
         await msg.reply_text("No se puede suscribir a notificaciones.")
         return
@@ -67,7 +95,9 @@ async def subscribe(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await msg.reply_text(reply)
         return
 
-    job = job_queue.run_repeating(send_notification, 10)
+    task = lambda ctx: send_notification(msg.chat_id, ctx)
+    job = job_queue.run_repeating(task, 20)
+
     context.user_data["job"] = job
 
     reply = "\n".join(
@@ -100,3 +130,10 @@ async def unsubscribe(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
     )
     await msg.reply_text(reply)
+
+
+async def report(update: Update, _: ContextTypes.DEFAULT_TYPE):
+    msg = cast(Message, update.message)
+    reports = await generate_report()
+    markdown = presenter.markdown(reports)
+    await msg.reply_text(markdown, parse_mode=ParseMode.MARKDOWN_V2)
