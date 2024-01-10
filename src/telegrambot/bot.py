@@ -1,7 +1,7 @@
 import telegrambot.presenter as presenter
 import asyncio
 
-from trackers import Dummy, ScrapperReport
+from trackers import Dummy, ScrapperReport, Full
 from typing import cast
 from telegram import Message, Update, User
 from telegram.helpers import escape_markdown
@@ -20,7 +20,7 @@ __all__ = ["run"]
 
 
 def build_tracker():
-    return Dummy()
+    return Full()
 
 
 def run(token: str):
@@ -86,17 +86,16 @@ async def subscribe(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if context.user_data.get("job"):
-        reply = "\n".join(
-            [
-                "Ya estás suscripto a mis notificaciones.",
-                "Utiliza /configurar para reconfigurar tus notificaciones.",
-            ]
-        )
+        reply = "Ya estás suscripto a mis notificaciones."
         await msg.reply_text(reply)
         return
 
-    task = lambda ctx: send_notification(msg.chat_id, ctx)
-    job = job_queue.run_repeating(task, 20)
+    # job = job_queue.run_daily(
+    #     lambda ctx: send_notification(msg.chat_id, ctx),
+    #     time=time.fromisoformat("10:00"),
+    #     days=(1,),
+    # )
+    job = job_queue.run_repeating(lambda ctx: send_notification(msg.chat_id, ctx), 20)
 
     context.user_data["job"] = job
 
