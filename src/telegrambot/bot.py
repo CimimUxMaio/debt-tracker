@@ -20,7 +20,7 @@ __all__ = ["run"]
 
 
 def build_tracker():
-    return Full()
+    return Dummy()
 
 
 def run(token: str):

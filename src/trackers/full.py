@@ -1,5 +1,3 @@
-from datetime import datetime
-import time
 import config as config
 import multiprocessing as mp
 

@@ -1,6 +1,4 @@
 import os
-import time
-import config
 
 from selenium.common.exceptions import (
     ElementClickInterceptedException,
@@ -40,7 +38,7 @@ class Edenor(Scrapper):
         submit_button.click()
 
         # Handle popups that were hidden
-        time.sleep(config.IMPLICIT_WAIT)
+        self.wait()
         popups = driver.find_elements("xpath", "//div[@role = 'dialog']")
         popup_close_btns = [
             popup.find_element("xpath", ".//button[1]") for popup in popups
