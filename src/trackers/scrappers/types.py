@@ -19,21 +19,27 @@ class ScrapperReport(NamedTuple):
 
 
 class Scrapper(ABC):
-    def __init__(self, name: str):
+    def __init__(self, name: str, *, headless: bool = True, crash: bool = False):
         self.name = name
+        self.headless = headless
+        self.crash = crash
 
     def wait(self):
         time.sleep(config.IMPLICIT_WAIT)
 
     def run_report(self) -> ScrapperReport:
         options = webdriver.FirefoxOptions()
-        options.add_argument("--headless")
+        if self.headless:
+            options.add_argument("--headless")
 
         with webdriver.Firefox(options=options) as driver:
             driver.implicitly_wait(config.IMPLICIT_WAIT)
             try:
                 content = self.scrap(driver)
-            except Exception:
+            except Exception as e:
+                if self.crash:
+                    raise e
+
                 content = None
 
         return ScrapperReport(self.name, content)

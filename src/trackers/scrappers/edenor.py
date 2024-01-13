@@ -15,8 +15,8 @@ class Edenor(Scrapper):
         "password": os.getenv("EDENOR_PWD"),
     }
 
-    def __init__(self):
-        super().__init__("Edenor")
+    def __init__(self, *, headless: bool = True, crash: bool = False):
+        super().__init__("Edenor", headless=headless, crash=crash)
 
     def scrap(self, driver: WebDriver) -> list[DebtReport]:
         driver.get(self.login_url)

@@ -1,12 +1,12 @@
 import time
 import math
 
-from trackers.scrappers import Edenor
+from trackers.scrappers import Metrogas
 
 
 def main():
     start = time.time()
-    report = Edenor(headless=False, crash=True).run_report()
+    report = Metrogas(headless=False, crash=True).run_report()
     elapsed_time = time.time() - start
     print("Duracion: ", math.ceil(elapsed_time), "segundos\n")
 
