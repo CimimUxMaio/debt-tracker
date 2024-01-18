@@ -3,9 +3,10 @@ import os
 import config
 import asyncio
 
+from from_root import from_root
 from multiprocessing import Queue
 from reporter import ReportRequest, ReportReply, RequestData
-from trackers import ScrapperReport, Full, Dummy
+from trackers import Full
 from typing import Any, Callable, Coroutine, cast
 from telegram import Message, Update, User
 from telegram.helpers import escape_markdown
@@ -19,6 +20,7 @@ from telegram.ext import (
     Job,
     JobQueue,
     ExtBot,
+    PicklePersistence,
 )
 
 
@@ -47,6 +49,7 @@ def secure_command(func: CmdHandler) -> CmdHandler:
 
 class TelegramBot:
     _bot: ExtBot | None = None
+    _sub_jobs: dict[int, Job] = {}
 
     def __init__(
         self, request_queue: "Queue[ReportRequest]", reply_queue: "Queue[ReportReply]"
@@ -71,8 +74,14 @@ class TelegramBot:
                     parse_mode=ParseMode.MARKDOWN_V2,
                 )
 
-    def run(self, token: str):
-        app = ApplicationBuilder().token(token).build()
+    def run(self, token: str, persist: bool = True):
+        builder = ApplicationBuilder().token(token)
+        if persist:
+            data_path = from_root("data/subscriptions.pickle")
+            persistence = PicklePersistence(filepath=data_path)
+            builder.persistence(persistence).post_init(self.restore_subscriptions)
+
+        app = builder.build()
         self.setup_application(app)
         loop = asyncio.get_event_loop()
         loop.create_task(self.receiver_loop())
@@ -82,10 +91,10 @@ class TelegramBot:
     def setup_application(self, app: Application):
         app.add_handlers(
             [
-                CommandHandler("start", self.start),
-                CommandHandler("suscribir", self.subscribe),
-                CommandHandler("desuscribir", self.unsubscribe),
-                CommandHandler("informe", self.report),
+                CommandHandler("start", self.cmdstart),
+                CommandHandler("suscribir", self.cmdsubscribe),
+                CommandHandler("desuscribir", self.cmdunsubscribe),
+                CommandHandler("informe", self.cmdreport),
             ]
         )
 
@@ -94,6 +103,19 @@ class TelegramBot:
         if self._bot is None:
             raise Exception("Bot is not initialized")
         return self._bot
+
+    def create_job(self, chat_id: int, job_queue: JobQueue):
+        return job_queue.run_daily(
+            lambda _: self.request_report(chat_id, "notification"),
+            time=time.fromisoformat(config.REPORT_TIME),
+            days=(config.REPORT_DAY,),
+        )
+
+    async def restore_subscriptions(self, app: Application):
+        job_queue = cast(JobQueue, app.job_queue)
+        for chat_id, data in app.chat_data.items():
+            if data.get("is_subscribed", False):
+                self._sub_jobs[chat_id] = self.create_job(chat_id, job_queue)
 
     async def request_report(self, chat_id: int, purpose: str = ""):
         tracker = build_tracker()
@@ -117,7 +139,7 @@ class TelegramBot:
 
     # Commands
 
-    async def start(self, update: Update, _: ContextTypes.DEFAULT_TYPE):
+    async def cmdstart(self, update: Update, _: ContextTypes.DEFAULT_TYPE):
         msg = cast(Message, update.message)
         user = cast(User, msg.from_user)
 
@@ -131,26 +153,23 @@ class TelegramBot:
         await msg.reply_text(reply)
 
     @secure_command
-    async def subscribe(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def cmdsubscribe(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         msg = cast(Message, update.message)
         job_queue = cast(JobQueue, context.job_queue)
 
-        if context.user_data is None:
+        if context.chat_data is None:
             await msg.reply_text("No se puede suscribir a notificaciones.")
             return
 
-        if context.user_data.get("job"):
+        if context.chat_data.get("is_subscribed", False):
             reply = "Ya estás suscripto a mis notificaciones."
             await msg.reply_text(reply)
             return
 
-        job = job_queue.run_daily(
-            lambda _: self.request_report(msg.chat_id, "notification"),
-            time=time.fromisoformat(config.REPORT_TIME),
-            days=(config.REPORT_DAY,),
-        )
+        job = self.create_job(msg.chat_id, job_queue)
+        self._sub_jobs[msg.chat_id] = job
 
-        context.user_data["job"] = job
+        context.chat_data["is_subscribed"] = True
 
         reply = "\n".join(
             [
@@ -160,19 +179,23 @@ class TelegramBot:
         )
         await msg.reply_text(reply)
 
-    async def unsubscribe(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def cmdunsubscribe(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         msg = cast(Message, update.message)
 
-        if context.user_data is None:
+        if context.chat_data is None:
             await msg.reply_text("No se puede desuscribir a notificaciones.")
             return
 
-        job: Job | None = context.user_data.get("job")
-        if not job:
+        if not context.chat_data.get("is_subscribed", False):
             await msg.reply_text("No estas suscrito a mis notificaciones.")
             return
 
-        job.schedule_removal()
+        del context.chat_data["is_subscribed"]
+
+        job = self._sub_jobs.get(msg.chat_id, None)
+        if job is not None:
+            job.schedule_removal()
+            del self._sub_jobs[msg.chat_id]
 
         reply = "\n".join(
             [
@@ -183,7 +206,7 @@ class TelegramBot:
         await msg.reply_text(reply)
 
     @secure_command
-    async def report(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def cmdreport(self, update: Update, _: ContextTypes.DEFAULT_TYPE):
         msg = cast(Message, update.message)
         await self.request_report(msg.chat_id)
         await msg.reply_text(

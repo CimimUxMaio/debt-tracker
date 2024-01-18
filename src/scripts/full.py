@@ -15,6 +15,7 @@ def main():
 
         if r.content is None:
             print("Informacion no Disponible.")
+            print("\n")
             continue
 
         for d in r.content:
