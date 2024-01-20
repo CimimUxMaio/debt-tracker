@@ -2,10 +2,12 @@ import telegrambot.presenter as presenter
 import os
 import config
 import asyncio
+import telegrambot.utils as utils
 
 from from_root import from_root
 from multiprocessing import Queue
 from reporter import ReportRequest, ReportReply, RequestData
+from telegrambot.types import CommandInfo
 from trackers import Full
 from typing import Any, Callable, Coroutine, cast
 from telegram import Message, Update, User
@@ -50,6 +52,7 @@ def secure_command(func: CmdHandler) -> CmdHandler:
 class TelegramBot:
     _bot: ExtBot | None = None
     _sub_jobs: dict[int, Job] = {}
+    _commands_info: list[CommandInfo] | None = None
 
     def __init__(
         self, request_queue: "Queue[ReportRequest]", reply_queue: "Queue[ReportReply]"
@@ -79,7 +82,7 @@ class TelegramBot:
         if persist:
             data_path = from_root("data/subscriptions.pickle")
             persistence = PicklePersistence(filepath=data_path)
-            builder.persistence(persistence).post_init(self.restore_subscriptions)
+            builder.persistence(persistence).post_init(self.post_init)
 
         app = builder.build()
         self.setup_application(app)
@@ -90,12 +93,7 @@ class TelegramBot:
 
     def setup_application(self, app: Application):
         app.add_handlers(
-            [
-                CommandHandler("start", self.cmdstart),
-                CommandHandler("suscribir", self.cmdsubscribe),
-                CommandHandler("desuscribir", self.cmdunsubscribe),
-                CommandHandler("informe", self.cmdreport),
-            ]
+            [CommandHandler(info.name, info.handler) for info in self.commands_info]
         )
 
     @property
@@ -103,6 +101,43 @@ class TelegramBot:
         if self._bot is None:
             raise Exception("Bot is not initialized")
         return self._bot
+
+    @property
+    def commands_info(self) -> list[CommandInfo]:
+        if self._commands_info is None:
+            self._commands_info = [
+                CommandInfo(
+                    name="start",
+                    handler=self.cmdstart,
+                    private=True,
+                ),
+                CommandInfo(
+                    name="suscribir",
+                    description="Suscribirse a las notificaciones.",
+                    help=f"Utiliza este comando para suscribirte a las notificaciones recurrentes de los dias *{utils.num_to_day(config.REPORT_DAY)}* a las *{escape_markdown(config.REPORT_TIME)}* horas\\.",
+                    handler=self.cmdsubscribe,
+                ),
+                CommandInfo(
+                    name="desuscribir",
+                    description="Desuscribirse de las notificaciones.",
+                    help="Utiliza este comando para desuscribirte de las notificaciones recurrentes\\.",
+                    handler=self.cmdunsubscribe,
+                ),
+                CommandInfo(
+                    name="informe",
+                    description="Generar informe ahora.",
+                    help="Utiliza este comando para generar un informe de forma manual\\, sin necesidad de esperar a la proxima notificacion\\. La generacion del informe puede demorar unos minutos\\.",
+                    handler=self.cmdreport,
+                ),
+                CommandInfo(
+                    name="ayuda",
+                    description="Mostrar mensaje de ayuda.",
+                    help="Muestra este mensaje\\.",
+                    handler=self.cmdhelp,
+                ),
+            ]
+
+        return self._commands_info
 
     def create_job(self, chat_id: int, job_queue: JobQueue):
         return job_queue.run_daily(
@@ -116,6 +151,19 @@ class TelegramBot:
         for chat_id, data in app.chat_data.items():
             if data.get("is_subscribed", False):
                 self._sub_jobs[chat_id] = self.create_job(chat_id, job_queue)
+
+    async def set_commands(self, app: Application):
+        await app.bot.set_my_commands(
+            [
+                (info.name, info.description)
+                for info in self.commands_info
+                if not info.private
+            ]
+        )
+
+    async def post_init(self, app: Application):
+        await self.restore_subscriptions(app)
+        await self.set_commands(app)
 
     async def request_report(self, chat_id: int, purpose: str = ""):
         tracker = build_tracker()
@@ -199,7 +247,7 @@ class TelegramBot:
 
         reply = "\n".join(
             [
-                "Te has desuscripto.",
+                "Te has desuscripto de mis notificaciones.",
                 "Recuerda que puedes volver a suscribirte utilizando /suscribir.",
             ]
         )
@@ -212,3 +260,13 @@ class TelegramBot:
         await msg.reply_text(
             "Estoy generando el informe, esto puede tomar algunos minutos."
         )
+
+    async def cmdhelp(self, update: Update, _: ContextTypes.DEFAULT_TYPE):
+        msg = cast(Message, update.message)
+        commands_help = [
+            f"_*/{info.name}*_ \\- {info.help}"
+            for info in self.commands_info
+            if not info.private
+        ]
+        reply = "\n\n".join(commands_help)
+        await msg.reply_text(reply, parse_mode=ParseMode.MARKDOWN_V2)
