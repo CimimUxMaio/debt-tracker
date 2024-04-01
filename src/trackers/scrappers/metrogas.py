@@ -7,13 +7,18 @@ from .types import DebtReport, Scrapper
 class Metrogas(Scrapper):
     login_url = "https://registro.micuenta.metrogas.com.ar/"
 
-    login_credentials = {
-        "email": os.getenv("METROGAS_EMAIL"),
-        "password": os.getenv("METROGAS_PWD"),
-    }
-
     def __init__(self, *, headless: bool = True, crash: bool = False):
         super().__init__("Metrogas", headless=headless, crash=crash)
+
+        email = os.getenv("METROGAS_EMAIL")
+        if email is None:
+            raise ValueError("METROGAS_EMAIL environment variable is not set")
+
+        password = os.getenv("METROGAS_PWD")
+        if password is None:
+            raise ValueError("METROGAS_PWD environment variable is not set")
+
+        self.login_credentials = {"email": email, "password": password}
 
     def scrap(self, driver: WebDriver) -> list[DebtReport]:
         driver.get(self.login_url)

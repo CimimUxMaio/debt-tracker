@@ -10,13 +10,17 @@ from .types import DebtReport, Scrapper
 class Edenor(Scrapper):
     login_url = "https://www.edenordigital.com/ingreso"
 
-    login_credentials = {
-        "email": os.getenv("EDENOR_EMAIL"),
-        "password": os.getenv("EDENOR_PWD"),
-    }
-
     def __init__(self, *, headless: bool = True, crash: bool = False):
         super().__init__("Edenor", headless=headless, crash=crash)
+        email = os.getenv("EDENOR_EMAIL")
+        if email is None:
+            raise ValueError("EDENOR_EMAIL environment variable is not set")
+
+        password = os.getenv("EDENOR_PWD")
+        if password is None:
+            raise ValueError("EDENOR_PWD environment variable is not set")
+
+        self.login_credentials = {"email": email, "password": password}
 
     def scrap(self, driver: WebDriver) -> list[DebtReport]:
         driver.get(self.login_url)

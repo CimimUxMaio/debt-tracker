@@ -1,6 +1,5 @@
 import os
 
-from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.firefox.webdriver import WebDriver
 from .types import DebtReport, Scrapper
 
@@ -8,13 +7,18 @@ from .types import DebtReport, Scrapper
 class Edesur(Scrapper):
     login_url = "https://ov.edesur.com.ar/login"
 
-    login_credentials = {
-        "email": os.getenv("EDESUR_EMAIL"),
-        "password": os.getenv("EDESUR_PWD"),
-    }
-
     def __init__(self, *, headless: bool = True, crash: bool = False):
         super().__init__("Edesur", headless=headless, crash=crash)
+
+        email = os.getenv("EDESUR_EMAIL")
+        if email is None:
+            raise ValueError("EDESUR_EMAIL environment variable is not set")
+
+        password = os.getenv("EDESUR_PWD")
+        if password is None:
+            raise ValueError("EDESUR_PWD environment variable is not set")
+
+        self.login_credentials = {"email": email, "password": password}
 
     def scrap(self, driver: WebDriver) -> list[DebtReport]:
         driver.get(self.login_url)
