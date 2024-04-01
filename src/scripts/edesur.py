@@ -1,12 +1,15 @@
 import time
 import math
+import sys
 
 from trackers.scrappers import Edesur
 
 
 def main():
     start = time.time()
-    report = Edesur(headless=False, crash=True).run_report()
+    headless = "--headless" in sys.argv
+    crash = "--crash" in sys.argv
+    report = Edesur(headless=headless, crash=crash).run_report()
     elapsed_time = time.time() - start
     print("Duracion: ", math.ceil(elapsed_time), "segundos\n")
 

@@ -1,4 +1,5 @@
 import time
+import sys
 import math
 
 from trackers.scrappers import Edenor
@@ -6,7 +7,9 @@ from trackers.scrappers import Edenor
 
 def main():
     start = time.time()
-    report = Edenor(headless=False, crash=True).run_report()
+    headless = "--headless" in sys.argv
+    crash = "--crash" in sys.argv
+    report = Edenor(headless=headless, crash=crash).run_report()
     elapsed_time = time.time() - start
     print("Duracion: ", math.ceil(elapsed_time), "segundos\n")
 
