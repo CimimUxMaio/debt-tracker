@@ -1,10 +1,14 @@
 import config
 import time
+import logging
 
 from abc import ABC, abstractmethod
 from typing import NamedTuple
 from selenium import webdriver
 from selenium.webdriver.firefox.webdriver import WebDriver
+
+
+logger = logging.getLogger("scrapper")
 
 
 class DebtReport(NamedTuple):
@@ -28,6 +32,7 @@ class Scrapper(ABC):
         time.sleep(config.IMPLICIT_WAIT)
 
     def run_report(self) -> ScrapperReport:
+        logger.info(f"Scrapper {self.name} start")
         options = webdriver.FirefoxOptions()
         if self.headless:
             options.add_argument("--headless")
@@ -42,6 +47,7 @@ class Scrapper(ABC):
 
                 content = None
 
+        logger.info(f"Scrapper {self.name} end")
         return ScrapperReport(self.name, content)
 
     @abstractmethod

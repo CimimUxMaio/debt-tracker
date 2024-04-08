@@ -3,6 +3,7 @@ import os
 import config
 import asyncio
 import telegrambot.utils as utils
+import logging
 
 from from_root import from_root
 from multiprocessing import Queue
@@ -27,6 +28,9 @@ from telegram.ext import (
 
 
 __all__ = ["TelegramBot"]
+
+
+logger = logging.getLogger("bot")
 
 
 def build_tracker():
@@ -189,6 +193,7 @@ class TelegramBot:
 
     async def cmdstart(self, update: Update, _: ContextTypes.DEFAULT_TYPE):
         msg = cast(Message, update.message)
+        logger.info("Command: cmdstart")
         user = cast(User, msg.from_user)
 
         reply = "\n".join(
@@ -203,6 +208,7 @@ class TelegramBot:
     @secure_command
     async def cmdsubscribe(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         msg = cast(Message, update.message)
+        logger.info("Command: cmdsubscribe")
         job_queue = cast(JobQueue, context.job_queue)
 
         if context.chat_data is None:
@@ -229,6 +235,7 @@ class TelegramBot:
 
     async def cmdunsubscribe(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         msg = cast(Message, update.message)
+        logger.info("Command: cmdunsubscribe")
 
         if context.chat_data is None:
             await msg.reply_text("No se puede desuscribir a notificaciones.")
@@ -256,6 +263,7 @@ class TelegramBot:
     @secure_command
     async def cmdreport(self, update: Update, _: ContextTypes.DEFAULT_TYPE):
         msg = cast(Message, update.message)
+        logger.info("Command: cmdreport")
         await self.request_report(msg.chat_id)
         await msg.reply_text(
             "Estoy generando el informe, esto puede tomar algunos minutos."
@@ -263,6 +271,7 @@ class TelegramBot:
 
     async def cmdhelp(self, update: Update, _: ContextTypes.DEFAULT_TYPE):
         msg = cast(Message, update.message)
+        logger.info("Command: cmdhelp")
         commands_help = [
             f"_*/{info.name}*_ \\- {info.help}"
             for info in self.commands_info
