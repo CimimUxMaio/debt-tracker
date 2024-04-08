@@ -1,5 +1,4 @@
 import os
-import re
 
 from selenium.common.exceptions import (
     ElementClickInterceptedException,
