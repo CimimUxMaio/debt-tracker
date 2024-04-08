@@ -1,4 +1,5 @@
 import os
+import re
 
 from selenium.common.exceptions import (
     ElementClickInterceptedException,
@@ -71,7 +72,9 @@ class Edenor(Scrapper):
         for i in range(register_num):
             account_register = account_registers[i]
             account_data = account_register.find_elements("tag name", "span")
-            address = account_data[0].text
+
+            address = account_data[0].text.split("\n")[0]  # Remove child elements text
+
             id = account_data[1].text
 
             view_details_button = account_register.find_element(
