@@ -1,4 +1,4 @@
-import os
+import config
 
 from selenium.common.exceptions import (
     ElementClickInterceptedException,
@@ -8,22 +8,21 @@ from .types import DebtReport, Scrapper
 
 
 class Edenor(Scrapper):
-    login_url = "https://www.edenordigital.com/ingreso"
-
     def __init__(self, *, headless: bool = True, crash: bool = False):
-        super().__init__("Edenor", headless=headless, crash=crash)
-        email = os.getenv("EDENOR_EMAIL")
-        if email is None:
-            raise ValueError("EDENOR_EMAIL environment variable is not set")
+        super().__init__(
+            "Edenor",
+            "https://www.edenordigital.com",
+            headless=headless,
+            crash=crash,
+        )
 
-        password = os.getenv("EDENOR_PWD")
-        if password is None:
-            raise ValueError("EDENOR_PWD environment variable is not set")
-
-        self.login_credentials = {"email": email, "password": password}
+        self.login_credentials = {
+            "email": config.EDENOR_EMAIL,
+            "password": config.EDENOR_PWD,
+        }
 
     def scrap(self, driver: WebDriver) -> list[DebtReport]:
-        driver.get(self.login_url)
+        driver.get(self.link + "/ingreso")
 
         email_input = driver.find_element(
             "xpath",

@@ -1,27 +1,25 @@
-import os
+import config
 
 from selenium.webdriver.firefox.webdriver import WebDriver
 from .types import DebtReport, Scrapper
 
 
 class Metrogas(Scrapper):
-    login_url = "https://registro.micuenta.metrogas.com.ar/"
-
     def __init__(self, *, headless: bool = True, crash: bool = False):
-        super().__init__("Metrogas", headless=headless, crash=crash)
+        super().__init__(
+            "Metrogas",
+            "https://registro.micuenta.metrogas.com.ar/",
+            headless=headless,
+            crash=crash,
+        )
 
-        email = os.getenv("METROGAS_EMAIL")
-        if email is None:
-            raise ValueError("METROGAS_EMAIL environment variable is not set")
-
-        password = os.getenv("METROGAS_PWD")
-        if password is None:
-            raise ValueError("METROGAS_PWD environment variable is not set")
-
-        self.login_credentials = {"email": email, "password": password}
+        self.login_credentials = {
+            "email": config.METROGAS_EMAIL,
+            "password": config.METROGAS_PWD,
+        }
 
     def scrap(self, driver: WebDriver) -> list[DebtReport]:
-        driver.get(self.login_url)
+        driver.get(self.link)
 
         login_button = driver.find_element("id", "loginButton")
         login_button.click()

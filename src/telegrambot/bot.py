@@ -1,5 +1,4 @@
 import telegrambot.presenter as presenter
-import os
 import config
 import asyncio
 import telegrambot.utils as utils
@@ -64,7 +63,7 @@ class TelegramBot:
         self.request_queue = request_queue
         self.reply_queue = reply_queue
         self.user_white_list = (
-            os.getenv("USER_WHITE_LIST", "").replace(" ", "").lower().split(",")
+            config.USER_WHITE_LIST.replace(" ", "").lower().split(",")
         )
 
     async def receiver_loop(self):

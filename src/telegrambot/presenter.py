@@ -12,7 +12,7 @@ def debt_report_markdown(report: DebtReport) -> str:
 
 
 def scrapper_report_markdown(report: ScrapperReport) -> str:
-    report_title = f"*{escape_markdown(report.title, version=2)}*"
+    report_title = f"*[{escape_markdown(report.title, version=2)}]({escape_markdown(report.link)})*"
 
     if report.content is None:
         report_body = "Ocurrio un error al generar el informe\\."

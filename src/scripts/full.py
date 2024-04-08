@@ -2,11 +2,9 @@ import time
 import math
 
 from trackers import Full
-from dotenv import load_dotenv
 
 
 def main():
-    load_dotenv()
     start = time.time()
     reports = Full().run()
     elapsed_time = time.time() - start

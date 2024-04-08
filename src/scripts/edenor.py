@@ -3,11 +3,9 @@ import sys
 import math
 
 from trackers.scrappers import Edenor
-from dotenv import load_dotenv
 
 
 def main():
-    load_dotenv()
     start = time.time()
     headless = "--headless" in sys.argv
     crash = "--crash" in sys.argv

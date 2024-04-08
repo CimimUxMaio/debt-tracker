@@ -1,13 +1,10 @@
-import os
 import logging
 import multiprocessing as mp
+import config
 
 from reporter import Reporter
 from telegrambot import TelegramBot
-from dotenv import load_dotenv
 
-
-load_dotenv()
 
 logging.basicConfig(
     format="[%(asctime)s][%(name)s][%(levelname)s] %(message)s",
@@ -20,9 +17,7 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 if __name__ == "__main__":
     mp.set_start_method("spawn")
 
-    token = os.getenv("TELEGRAM_TOKEN")
-    if token is None:
-        raise Exception("TELEGRAM_TOKEN is not set")
+    token = config.TELEGRAM_TOKEN
 
     request_queue = mp.Queue()
     reply_queue = mp.Queue()

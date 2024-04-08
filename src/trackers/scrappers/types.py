@@ -19,12 +19,16 @@ class DebtReport(NamedTuple):
 
 class ScrapperReport(NamedTuple):
     title: str
+    link: str
     content: list[DebtReport] | None
 
 
 class Scrapper(ABC):
-    def __init__(self, name: str, *, headless: bool = True, crash: bool = False):
+    def __init__(
+        self, name: str, link: str, *, headless: bool = True, crash: bool = False
+    ):
         self.name = name
+        self.link = link
         self.headless = headless
         self.crash = crash
 
@@ -48,7 +52,7 @@ class Scrapper(ABC):
                 content = None
 
         logger.info(f"Scrapper {self.name} end")
-        return ScrapperReport(self.name, content)
+        return ScrapperReport(self.name, self.link, content)
 
     @abstractmethod
     def scrap(self, driver: WebDriver) -> list[DebtReport]:
