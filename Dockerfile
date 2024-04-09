@@ -11,9 +11,11 @@ RUN apt install -y firefox-esr python3-poetry
 
 ## Install geckodriver
 ARG GECKODRIVER_VERSION=v0.34.0
-ARG GECKODRIVER_ARCH=linux64
 
-RUN wget https://github.com/mozilla/geckodriver/releases/download/$GECKODRIVER_VERSION/geckodriver-$GECKODRIVER_VERSION-$GECKODRIVER_ARCH.tar.gz && \
+RUN GECKODRIVER_ARCH=$([ "$(uname -m)" = "x86_64" ] && echo "linux64" || ([ "$(uname -m)" = "aarch64" ] && echo "linux-aarch64")) && \
+    if [ -z "$GECKODRIVER_ARCH" ]; then echo "Unsupported architecture"; exit 1; fi && \
+    echo "GECKODRIVER_ARCH = $GECKODRIVER_ARCH" && \
+    wget https://github.com/mozilla/geckodriver/releases/download/$GECKODRIVER_VERSION/geckodriver-$GECKODRIVER_VERSION-$GECKODRIVER_ARCH.tar.gz && \
     tar -xvzf geckodriver-$GECKODRIVER_VERSION-$GECKODRIVER_ARCH.tar.gz && \
     chmod +xrw geckodriver && \
     mv geckodriver /usr/local/bin
