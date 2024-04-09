@@ -3,10 +3,11 @@ from trackers import ScrapperReport, DebtReport
 
 
 def debt_report_markdown(report: DebtReport) -> str:
+    formatted_debt = f"{report.debt:_.2f}".replace(".", ",").replace("_", ".")
     return "\n".join(
         [
             f"\\- {escape_markdown(report.address, version=2)}",
-            f"  Deuda: _${escape_markdown(str(report.debt), version=2)}_",
+            f"  Deuda: _${escape_markdown(formatted_debt, version=2)}_",
         ]
     )
 
