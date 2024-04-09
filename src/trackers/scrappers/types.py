@@ -39,12 +39,12 @@ class Scrapper(ABC):
         logger.info(f"Scrapper {self.name} start")
 
         options = webdriver.FirefoxOptions()
-        if config.GECKODRIVER_PATH is not None:
-            options.binary_location = config.GECKODRIVER_PATH
+        if config.FIREFOX_PATH is not None:
+            options.binary_location = config.FIREFOX_PATH
 
         service = webdriver.FirefoxService()
-        if config.FIREFOX_PATH is not None:
-            service.path = config.FIREFOX_PATH
+        if config.GECKODRIVER_PATH is not None:
+            service.path = config.GECKODRIVER_PATH
 
         if self.headless:
             options.add_argument("--headless")
