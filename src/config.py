@@ -36,6 +36,9 @@ REPORT_TIME = check_env("REPORT_TIME")
 
 REPORT_DAY = int(check_env("REPORT_DAY"))
 
+# In minutes
+CACHE_LIFETIME = int(check_env("CACHE_LIFETIME"))
+
 
 # Optional
 

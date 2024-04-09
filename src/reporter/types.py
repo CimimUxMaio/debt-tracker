@@ -3,8 +3,9 @@ from typing import NamedTuple, Protocol
 
 
 class Tracker(Protocol):
-    def run(self) -> list[ScrapperReport]:
-        ...
+    name: str
+
+    def run(self) -> list[ScrapperReport]: ...
 
 
 class RequestData(NamedTuple):

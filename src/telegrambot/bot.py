@@ -32,10 +32,6 @@ __all__ = ["TelegramBot"]
 logger = logging.getLogger("bot")
 
 
-def build_tracker():
-    return Full()
-
-
 CmdHandler = Callable[
     [Any, Update, ContextTypes.DEFAULT_TYPE], Coroutine[Any, Any, None]
 ]
@@ -62,6 +58,7 @@ class TelegramBot:
     ):
         self.request_queue = request_queue
         self.reply_queue = reply_queue
+        self.tracker = Full()
         self.user_white_list = (
             config.USER_WHITE_LIST.replace(" ", "").lower().split(",")
         )
@@ -169,9 +166,8 @@ class TelegramBot:
         await self.set_commands(app)
 
     async def request_report(self, chat_id: int, purpose: str = ""):
-        tracker = build_tracker()
         data = RequestData(chat_id, purpose)
-        self.request_queue.put_nowait(ReportRequest(tracker, data))
+        self.request_queue.put_nowait(ReportRequest(self.tracker, data))
 
     async def send_notification(self, reply: ReportReply):
         markdown = presenter.markdown(reply.reports)
