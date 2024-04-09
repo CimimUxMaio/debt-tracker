@@ -37,11 +37,19 @@ class Scrapper(ABC):
 
     def run_report(self) -> ScrapperReport:
         logger.info(f"Scrapper {self.name} start")
+
         options = webdriver.FirefoxOptions()
+        if config.GECKODRIVER_PATH is not None:
+            options.binary_location = config.GECKODRIVER_PATH
+
+        service = webdriver.FirefoxService()
+        if config.FIREFOX_PATH is not None:
+            service.path = config.FIREFOX_PATH
+
         if self.headless:
             options.add_argument("--headless")
 
-        with webdriver.Firefox(options=options) as driver:
+        with webdriver.Firefox(service=service, options=options) as driver:
             driver.implicitly_wait(config.IMPLICIT_WAIT)
             try:
                 content = self.scrap(driver)

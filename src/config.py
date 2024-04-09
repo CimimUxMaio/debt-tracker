@@ -35,3 +35,10 @@ SCRAPPER_POOL_SIZE = int(check_env("SCRAPPER_POOL_SIZE"))
 REPORT_TIME = check_env("REPORT_TIME")
 
 REPORT_DAY = int(check_env("REPORT_DAY"))
+
+
+# Optional
+
+GECKODRIVER_PATH = os.getenv("GECKODRIVER_PATH")
+
+FIREFOX_PATH = os.getenv("FIREFOX_PATH")
