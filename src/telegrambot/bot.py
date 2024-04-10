@@ -259,10 +259,10 @@ class TelegramBot:
     async def cmdreport(self, update: Update, _: ContextTypes.DEFAULT_TYPE):
         msg = cast(Message, update.message)
         logger.info("Command: cmdreport")
-        await self.request_report(msg.chat_id)
         await msg.reply_text(
             "Estoy generando el informe, esto puede tomar algunos minutos."
         )
+        await self.request_report(msg.chat_id)
 
     async def cmdhelp(self, update: Update, _: ContextTypes.DEFAULT_TYPE):
         msg = cast(Message, update.message)
