@@ -93,7 +93,7 @@ class Edenor(Scrapper):
             )
 
             address = f"{header[0].text}, {header[1].text}"
-            logging.info(f"Address found: {address}")
+            logger.info(f"Address found: {address}")
 
             info = card.find_element(
                 "xpath", ".//div[contains(@class, 'styles_accountInfo')]/div"
@@ -105,9 +105,9 @@ class Edenor(Scrapper):
 
             id = id_match.group(1)
 
-            logging.info(f"ID found: {id}")
+            logger.info(f"ID found: {id}")
 
-            logging.info("Navigating to account page")
+            logger.info("Navigating to account page")
             card.click()
 
             debt_integer = driver.find_element(
@@ -121,9 +121,9 @@ class Edenor(Scrapper):
             debt = float(
                 debt_integer.removeprefix("$").replace(".", "") + "." + debt_decimal
             )
-            logging.info(f"Debt found: {debt}")
+            logger.info(f"Debt found: {debt}")
 
-            logging.info(f"Account {i} scrapping successful: {id}, {address}, {debt}")
+            logger.info(f"Account {i} scrapping successful: {id}, {address}, {debt}")
 
             reports.append(DebtReport(id, address, debt))
 

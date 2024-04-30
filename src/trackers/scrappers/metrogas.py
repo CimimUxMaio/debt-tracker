@@ -85,20 +85,20 @@ class Metrogas(Scrapper):
                 "//div[./div/span[text() = 'Número de Cliente']]/div[2]//span",
             ).text
 
-            logging.info(f"ID found: {id}")
+            logger.info(f"ID found: {id}")
 
             address = driver.find_element(
                 "xpath",
                 "//div[./div/span[text() = 'Dirección']]/div[2]//span",
             ).text
-            logging.info(f"Address found: {address}")
+            logger.info(f"Address found: {address}")
 
             debt_text = driver.find_element(
                 "xpath",
                 "//div[./div/div[text() = 'Estado de Cuenta']]//span[contains(text(), '$') or text() = 'No registra deuda']",
             ).text
 
-            logging.info("Debt elements found")
+            logger.info("Debt elements found")
 
             debt = 0
             if debt_text != "No registra deuda":
@@ -109,9 +109,9 @@ class Metrogas(Scrapper):
                     .replace(",", ".")
                 )
 
-            logging.info(f"Debt found: {debt}")
+            logger.info(f"Debt found: {debt}")
 
-            logging.info(f"Account {i} scrapping successful: {id}, {address}, {debt}")
+            logger.info(f"Account {i} scrapping successful: {id}, {address}, {debt}")
 
             reports.append(DebtReport(id, address, debt))
 

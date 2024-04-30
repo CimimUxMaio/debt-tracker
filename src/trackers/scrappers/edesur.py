@@ -73,19 +73,19 @@ class Edesur(Scrapper):
             account = account_list[i]
             logger.info(f"Scrapping account {i}")
 
-            logging.info("Navigating to account page")
+            logger.info("Navigating to account page")
             account.click()
 
-            logging.info("Waiting for account info to load")
+            logger.info("Waiting for account info to load")
             self.wait()  # Wait for account info to load
 
             account_data = driver.find_elements("tag name", "td")
 
             id = account_data[2].text
-            logging.info(f"ID found: {id}")
+            logger.info(f"ID found: {id}")
 
             address = account_data[1].text
-            logging.info(f"Address found: {address}")
+            logger.info(f"Address found: {address}")
 
             debt_panel = driver.find_element(
                 "xpath",
@@ -97,7 +97,7 @@ class Edesur(Scrapper):
                 ".//div[./p[text() = 'TOTAL A PAGAR']]/p[2] | .//span[contains(text(), 'no posee deuda')]",
             ).text
 
-            logging.info("Debt elements found")
+            logger.info("Debt elements found")
 
             debt = 0
             if debt_text != "Al día de la fecha, su cuenta no posee deuda.":
@@ -108,9 +108,9 @@ class Edesur(Scrapper):
                     .replace(",", ".")
                 )
 
-            logging.info(f"Debt found: {debt}")
+            logger.info(f"Debt found: {debt}")
 
-            logging.info(f"Account {i} scrapping successful: {id}, {address}, {debt}")
+            logger.info(f"Account {i} scrapping successful: {id}, {address}, {debt}")
 
             reports.append(DebtReport(id, address, debt))
 
