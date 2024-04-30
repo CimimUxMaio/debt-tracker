@@ -11,7 +11,7 @@ from trackers.scrappers.types import ScrapperReport
 __all__ = ["Reporter"]
 
 
-logger = logging.getLogger("reporter")
+logger = logging.getLogger(__name__)
 
 
 class CacheItem(NamedTuple):

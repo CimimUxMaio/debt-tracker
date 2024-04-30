@@ -1,8 +1,15 @@
 import time
 import sys
 import math
+import logging
 
 from trackers.scrappers import Edenor
+
+logging.basicConfig(
+    format="[%(asctime)s][%(name)s][%(levelname)s] %(message)s",
+    datefmt="%H:%M:%S",
+    level=logging.INFO,
+)
 
 
 def main():
