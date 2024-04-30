@@ -1,10 +1,14 @@
 import config
+import logging
+import re
 
 from selenium.common.exceptions import (
     ElementClickInterceptedException,
 )
 from selenium.webdriver.firefox.webdriver import WebDriver
 from .types import DebtReport, Scrapper
+
+logger = logging.getLogger(__name__)
 
 
 class Edenor(Scrapper):
@@ -22,7 +26,9 @@ class Edenor(Scrapper):
         }
 
     def scrap(self, driver: WebDriver) -> list[DebtReport]:
-        driver.get(self.link + "/ingreso")
+        base_url = self.link + "/cuentas"
+        logger.info(f"Navigating to: {base_url}")
+        driver.get(base_url)
 
         email_input = driver.find_element(
             "xpath",
@@ -36,11 +42,16 @@ class Edenor(Scrapper):
             "xpath", "//button[.//div[contains(text(), 'Ingresar')]]"
         )
 
+        logger.info("Log in elements found")
+
         email_input.send_keys(self.login_credentials["email"])
         password_input.send_keys(self.login_credentials["password"])
         submit_button.click()
 
+        logger.info("Log in successful")
+
         # Handle popups that were hidden
+        logger.info("Waiting for popups to load")
         self.wait()
         popups = driver.find_elements("xpath", "//div[@role = 'dialog']")
         popup_close_btns = [
@@ -55,30 +66,49 @@ class Edenor(Scrapper):
             except ElementClickInterceptedException:
                 attempt += 1
 
-        grid_display_button = driver.find_element(
-            "xpath", "//button[.//*[local-name()='svg' and @width='21px']]"
-        )
-        grid_display_button.click()
+        logger.info("Popups successfully closed")
 
-        account_registers = driver.find_elements(
-            "xpath", "//div[contains(@class, 'styles_responsiveRow')]"
-        )
+        def find_cards():
+            cards = driver.find_elements(
+                "xpath",
+                "//div[contains(@class, 'styles_container')]//div[contains(@class, 'styles_row')]/div[contains(@class, 'styles_item')]",
+            )
+            logger.info("Account cards found")
+            return cards
 
-        register_num = len(account_registers)
+        account_cards = find_cards()
+        account_num = len(account_cards)
+        logger.info(f"Found {account_num} account card elements")
+
+        if account_num == 0:
+            raise Exception("No accounts where found")
 
         reports = []
-        for i in range(register_num):
-            account_register = account_registers[i]
-            account_data = account_register.find_elements("tag name", "span")
+        for i in range(account_num):
+            logger.info(f"Scrapping account {i}")
+            card = account_cards[i]
 
-            address = account_data[0].text.split("\n")[0]  # Remove child elements text
-
-            id = account_data[1].text
-
-            view_details_button = account_register.find_element(
-                "xpath", "(.//div[@role='button'])[2]"
+            header = card.find_elements(
+                "xpath", ".//div[contains(@class, 'styles_accountAddress')]/*"
             )
-            view_details_button.click()
+
+            address = f"{header[0].text}, {header[1].text}"
+            logging.info(f"Address found: {address}")
+
+            info = card.find_element(
+                "xpath", ".//div[contains(@class, 'styles_accountInfo')]/div"
+            )
+
+            id_match = re.search(r"Cuenta N°\s+(\d+)\s+-", info.text)
+            if id_match is None:
+                raise Exception(f"Account ID could not be found for {address}")
+
+            id = id_match.group(1)
+
+            logging.info(f"ID found: {id}")
+
+            logging.info("Navigating to account page")
+            card.click()
 
             debt_integer = driver.find_element(
                 "xpath", "//h1[contains(@class, 'styles_amount')]"
@@ -91,13 +121,14 @@ class Edenor(Scrapper):
             debt = float(
                 debt_integer.removeprefix("$").replace(".", "") + "." + debt_decimal
             )
+            logging.info(f"Debt found: {debt}")
+
+            logging.info(f"Account {i} scrapping successful: {id}, {address}, {debt}")
 
             reports.append(DebtReport(id, address, debt))
 
             driver.back()
 
-            account_registers = driver.find_elements(
-                "xpath", "//div[contains(@class, 'styles_responsiveRow')]"
-            )
+            account_cards = find_cards()
 
         return reports
