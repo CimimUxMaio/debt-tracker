@@ -1,9 +1,7 @@
-import time
 import config
 import logging
 
 from multiprocessing import Pool
-from typing import NamedTuple
 from trackers.scrappers import Edenor, Edesur, Metrogas
 from trackers.scrappers.types import Scrapper, ScrapperReport
 
@@ -11,7 +9,7 @@ from trackers.scrappers.types import Scrapper, ScrapperReport
 __all__ = ["Full"]
 
 
-logger = logging.getLogger("trackers.Full")
+logger = logging.getLogger(__name__)
 
 
 class Full:

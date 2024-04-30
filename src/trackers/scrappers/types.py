@@ -8,7 +8,7 @@ from selenium import webdriver
 from selenium.webdriver.firefox.webdriver import WebDriver
 
 
-logger = logging.getLogger("scrapper")
+logger = logging.getLogger(__name__)
 
 
 class DebtReport(NamedTuple):

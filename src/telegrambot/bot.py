@@ -29,7 +29,7 @@ from telegram.ext import (
 __all__ = ["TelegramBot"]
 
 
-logger = logging.getLogger("bot")
+logger = logging.getLogger(__name__)
 
 
 CmdHandler = Callable[
