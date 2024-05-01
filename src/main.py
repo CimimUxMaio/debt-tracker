@@ -25,8 +25,8 @@ if __name__ == "__main__":
     bot = TelegramBot(request_queue, reply_queue)
     p_bot = mp.Process(target=bot.run, args=(token,))
 
-    reporter = Reporter(request_queue, reply_queue)
-    p_reporter = mp.Process(target=reporter.run)
+    reporter = Reporter()
+    p_reporter = mp.Process(target=reporter.run, args=(request_queue, reply_queue))
 
     p_reporter.start()
     p_bot.start()

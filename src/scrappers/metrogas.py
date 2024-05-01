@@ -9,13 +9,8 @@ logger = logging.getLogger(__name__)
 
 
 class Metrogas(Scrapper):
-    def __init__(self, *, headless: bool = True, crash: bool = False):
-        super().__init__(
-            "Metrogas",
-            "https://registro.micuenta.metrogas.com.ar/",
-            headless=headless,
-            crash=crash,
-        )
+    def __init__(self):
+        super().__init__("Metrogas", "https://registro.micuenta.metrogas.com.ar/")
 
         self.login_credentials = {
             "email": config.METROGAS_EMAIL,

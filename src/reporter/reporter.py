@@ -3,9 +3,11 @@ import logging
 import config
 
 from typing import NamedTuple
+from multiprocessing import Pool
 from reporter.types import ReportReply, ReportRequest
 from multiprocessing import Queue
-from trackers.scrappers.types import ScrapperReport
+from scrappers import Metrogas, Edenor, Edesur
+from scrappers.types import ScrapperReport, Scrapper
 
 
 __all__ = ["Reporter"]
@@ -15,45 +17,71 @@ logger = logging.getLogger(__name__)
 
 
 class CacheItem(NamedTuple):
-    reports: list[ScrapperReport]
+    report: ScrapperReport
     timestamp: float
 
 
-Cache = dict[str, CacheItem]
+class Cache:
+    def __init__(self):
+        self._dict: dict[str, CacheItem] = {}
+
+    def lookup(self, name: str) -> ScrapperReport | None:
+        hit = self._dict.get(name, None)
+        if hit is not None and time.time() < hit.timestamp + config.CACHE_LIFETIME * 60:
+            logger.info(f"Cache hit for {name}")
+            return hit.report
+
+        logger.info(f"Cache miss for {name}")
+        return None
+
+    def update(self, name: str, report: ScrapperReport):
+        self._dict[name] = CacheItem(report, time.time())
+        logger.info(f"Cache updated for {name}")
 
 
 class Reporter:
-    def __init__(
+    scrappers: list[Scrapper] = [Edenor(), Edesur(), Metrogas()]
+    cache: Cache = Cache()
+
+    def run(
         self, request_queue: "Queue[ReportRequest]", reply_queue: "Queue[ReportReply]"
     ):
-        self.request_queue = request_queue
-        self.reply_queue = reply_queue
-        self._cache: Cache = {}
-
-    def run(self):
         while True:
-            request = self.request_queue.get()
-            logger.info(f"Received request for tracker: {request.tracker.name}")
+            request = request_queue.get()
+            logger.info(f"Received request: {request}")
 
-            hit = self.cache_hit(request.tracker.name)
-            if hit is None:
-                reports = request.tracker.run()
-                self.update_cache(request.tracker.name, reports)
-            else:
-                logger.info(f"Cache hit for tracker: {request.tracker.name}")
-                reports = hit.reports
+            # Get scrappers which do not have a caché hit
+            scrappers_to_run = []
+            cached_reports = []
+            for scrapper in self.scrappers:
+                if hit := self.cache.lookup(scrapper.name):
+                    cached_reports.append(hit)
+                else:
+                    scrappers_to_run.append(scrapper)
 
-            self.reply_queue.put_nowait(ReportReply(reports, request.data))
+            # Run scrappers in parallel
+            with Pool(processes=config.SCRAPPER_POOL_SIZE) as pool:
+                results = pool.map(run_scrapper, scrappers_to_run)
 
-    def update_cache(self, tracker: str, reports: list[ScrapperReport]):
-        if any([report.content is None for report in reports]):
-            return
+            # Update cache with the newly generated reports
+            new_reports = []
+            for scrapper, report in results:
+                self.cache.update(scrapper.name, report)
+                new_reports.append(report)
 
-        logger.info(f"Updating cache for tracker: {tracker}")
-        self._cache[tracker] = CacheItem(reports, time.time())
+            reports = cached_reports + new_reports
 
-    def cache_hit(self, tracker: str) -> CacheItem | None:
-        hit = self._cache.get(tracker, None)
-        if hit is not None and time.time() < hit.timestamp + config.CACHE_LIFETIME * 60:
-            return hit
-        return None
+            # Queue reply
+            reply_queue.put_nowait(ReportReply(reports, request))
+
+
+def run_scrapper(scrapper: Scrapper) -> tuple[Scrapper, ScrapperReport]:
+    logger.info(f"Running scrapper: {scrapper.name}")
+
+    report = scrapper.run_report()
+
+    if report.content is None:
+        logger.warn("Scrapped content is missing")
+
+    logger.info(f"Scrapper {scrapper.name} finished")
+    return scrapper, report

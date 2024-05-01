@@ -1,23 +1,12 @@
-from trackers import ScrapperReport
-from typing import NamedTuple, Protocol
-
-
-class Tracker(Protocol):
-    name: str
-
-    def run(self) -> list[ScrapperReport]: ...
-
-
-class RequestData(NamedTuple):
-    chat_id: int
-    purpose: str
+from scrappers.types import ScrapperReport
+from typing import NamedTuple
 
 
 class ReportRequest(NamedTuple):
-    tracker: Tracker
-    data: RequestData
+    chat_ids: list[int]
+    purpose: str
 
 
 class ReportReply(NamedTuple):
     reports: list[ScrapperReport]
-    data: RequestData
+    request: ReportRequest

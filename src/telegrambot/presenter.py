@@ -1,5 +1,5 @@
 from telegram.helpers import escape_markdown
-from trackers import ScrapperReport, DebtReport
+from scrappers.types import ScrapperReport, DebtReport
 
 
 def debt_report_markdown(report: DebtReport) -> str:

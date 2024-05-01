@@ -24,20 +24,16 @@ class ScrapperReport(NamedTuple):
 
 
 class Scrapper(ABC):
-    def __init__(
-        self, name: str, link: str, *, headless: bool = True, crash: bool = False
-    ):
+    def __init__(self, name: str, link: str):
         self.name = name
         self.link = link
-        self.headless = headless
-        self.crash = crash
+        self.headless = True
+        self.crash = False
 
     def wait(self):
         time.sleep(config.IMPLICIT_WAIT)
 
     def run_report(self) -> ScrapperReport:
-        logger.info(f"Scrapper {self.name} start")
-
         options = webdriver.FirefoxOptions()
         if config.FIREFOX_PATH is not None:
             options.binary_location = config.FIREFOX_PATH
@@ -59,7 +55,6 @@ class Scrapper(ABC):
 
                 content = None
 
-        logger.info(f"Scrapper {self.name} end")
         return ScrapperReport(self.name, self.link, content)
 
     @abstractmethod

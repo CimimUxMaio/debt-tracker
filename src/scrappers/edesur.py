@@ -8,10 +8,8 @@ logger = logging.getLogger(__name__)
 
 
 class Edesur(Scrapper):
-    def __init__(self, *, headless: bool = True, crash: bool = False):
-        super().__init__(
-            "Edesur", "https://ov.edesur.com.ar", headless=headless, crash=crash
-        )
+    def __init__(self):
+        super().__init__("Edesur", "https://ov.edesur.com.ar")
 
         self.login_credentials = {
             "email": config.EDESUR_EMAIL,
