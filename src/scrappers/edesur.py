@@ -87,12 +87,12 @@ class Edesur(Scrapper):
 
             debt_panel = driver.find_element(
                 "xpath",
-                "//div[./h5[text() = 'Estado de cuenta']]",
+                "//div[./h3[text() = 'Estado de cuenta']]",
             )
 
             debt_text = debt_panel.find_element(
                 "xpath",
-                ".//div[./p[text() = 'TOTAL A PAGAR']]/p[2] | .//span[contains(text(), 'no posee deuda')]",
+                ".//div[./p[text() = 'TOTAL A PAGAR']]/p[2] | .//p[contains(text(), 'no posee deuda')]",
             ).text
 
             logger.info("Debt elements found")
